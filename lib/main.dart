@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -70,9 +71,11 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Aquí irá la navegación a la siguiente pantalla
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Próximamente...')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotesScreen(),
+                      ),
                     );
                   },
                   child: const Text(
