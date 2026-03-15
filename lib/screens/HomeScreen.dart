@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import 'AddNoteScreen.dart';
 
 // ── Modelo de datos ──────────────────────────────────────────────────────────
 
@@ -40,37 +41,46 @@ class NotesScreen extends StatefulWidget {
   State<NotesScreen> createState() => _NotesScreenState();
 }
 
+// _notes pasa de 'const' a ser 'mutable' para agregar nuevas notas de forma dinámica
 class _NotesScreenState extends State<NotesScreen> {
-  final List<Note> _notes = const [
-    Note(
-      title: 'Parcial Final',
-      body: 'El dia sabado 01 de Noviembre es el parcial final de investigacion',
-      date: '25/10/2025',
-      isFeatured: true,
-      cardColor: Color(0xFFF5F0C8),
-      textColor: Color(0xFF1C1C1E),
-    ),
-    Note(
-      title: 'Nota 2',
-      date: '24/10/2025',
-      cardColor: Color(0xFF2C2C2E),
-      tags: [
-        NoteTag(label: 'Gym', color: Color(0xFF3B82F6)),
-        NoteTag(label: 'Pagos', color: Color(0xFF22C55E)),
-      ],
-    ),
-    Note(
-      title: 'Nota 3',
-      body: 'Comprar comida del perro',
-      date: '23/10/2025',
-      cardColor: Color(0xFF2C2C2E),
-      textColor: Color(0xFFF59E0B),
-    ),
+  final List<Note> _notes = [
+  const Note(
+    title: 'Parcial Final',
+    body: 'El dia sabado 01 de Noviembre es el parcial final de investigacion',
+    date: '25/10/2025',
+    isFeatured: true,
+    cardColor: Color(0xFFF5F0C8),
+    textColor: Color(0xFF1C1C1E),
+  ),
+  const Note(
+    title: 'Nota 2',
+    date: '24/10/2025',
+    cardColor: Color(0xFF2C2C2E),
+    tags: [
+      NoteTag(label: 'Gym', color: Color(0xFF3B82F6)),
+      NoteTag(label: 'Pagos', color: Color(0xFF22C55E)),
+    ],
+  ),
+  const Note(
+    title: 'Nota 3',
+    body: 'Comprar comida del perro',
+    date: '23/10/2025',
+    cardColor: Color(0xFF2C2C2E),
+    textColor: Color(0xFFF59E0B),
+  ),
   ];
 
+  //Con este método se agrega las notas recibidas desde AddNoteScreen
+  void _addNote(Note note) {
+    setState(() {
+      _notes.insert(0, note);
+    });
+  }
+
+  //Se separa la lógica de featuredNotes y smallNotes para que múltiples destacadas funcionen correctamente.
   @override
   Widget build(BuildContext context) {
-    final featuredNote = _notes.firstWhere((n) => n.isFeatured);
+    final featuredNotes = _notes.where((n) => n.isFeatured).toList();
     final smallNotes = _notes.where((n) => !n.isFeatured).toList();
 
     return Scaffold(
@@ -112,22 +122,30 @@ class _NotesScreenState extends State<NotesScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      _FeaturedNoteCard(note: featuredNote),
-                      const SizedBox(height: 14),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: smallNotes.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 1.05,
+                      //Aquí van las notas destacadas
+                      ...featuredNotes.map(
+                        (note) => Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: _FeaturedNoteCard(note: note),
                         ),
-                        itemBuilder: (context, index) =>
-                            _SmallNoteCard(note: smallNotes[index]),
                       ),
+ 
+                      // Notas pequeñas en grid
+                      if (smallNotes.isNotEmpty)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: smallNotes.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 1.05,
+                          ),
+                          itemBuilder: (context, index) =>
+                              _SmallNoteCard(note: smallNotes[index]),
+                        ),
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -137,7 +155,16 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const _BottomBar(),
+      bottomNavigationBar: _BottomBar(
+        onAddTap: () async {
+          // Navega a AddNoteScreen y espera la nota de retorno
+          final newNote = await Navigator.push<Note>(
+            context,
+            MaterialPageRoute(builder: (_) => const AddNoteScreen()),
+          );
+          if (newNote != null) _addNote(newNote);
+        },
+      ),
     );
   }
 
@@ -346,9 +373,10 @@ class _SmallNoteCard extends StatelessWidget {
 }
 
 // ── Widget: Bottom Navigation Bar ───────────────────────────────────────────
-
+//Cambios: este botón ahora recibe un OnAddTap con el que navegamos a AddNoteScreen con Navigator.Push
 class _BottomBar extends StatelessWidget {
-  const _BottomBar();
+  final VoidCallback onAddTap;
+  const _BottomBar({required this.onAddTap});
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +391,7 @@ class _BottomBar extends StatelessWidget {
         children: [
           _NavIcon(icon: Icons.present_to_all_rounded, onTap: () {}),
           GestureDetector(
-            onTap: () {},
+            onTap: onAddTap,
             child: Container(
               width: 52,
               height: 52,
