@@ -28,6 +28,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     const Color(0xFF2D4A3E), // Verde oscuro
     const Color(0xFF4A1E2D), // Rojo oscuro
     const Color(0xFF3D2C6B), // Morado oscuro
+    const Color.fromARGB(255, 236, 22, 165), // rosado
+    const Color.fromARGB(255, 73, 8, 252), // azul
   ];
  
   // ── Paleta de colores para el texto ──────────────────────────────────────
@@ -81,7 +83,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El título no puede estar vacío'),
-          backgroundColor: Color(0xFF3B82F6),
+          backgroundColor: Color.fromARGB(255, 248, 57, 9),
           behavior: SnackBarBehavior.floating,
         ),
       );
