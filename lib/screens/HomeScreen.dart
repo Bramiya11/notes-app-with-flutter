@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'AddNoteScreen.dart';
+import 'OpenNoteScreen.dart';
 
 // ── Modelo de datos ──────────────────────────────────────────────────────────
 
@@ -41,47 +42,94 @@ class NotesScreen extends StatefulWidget {
   State<NotesScreen> createState() => _NotesScreenState();
 }
 
-// _notes pasa de 'const' a ser 'mutable' para agregar nuevas notas de forma dinámica
 class _NotesScreenState extends State<NotesScreen> {
   final List<Note> _notes = [
-  const Note(
-    title: 'Parcial Final',
-    body: 'El dia sabado 01 de Noviembre es el parcial final de investigacion',
-    date: '25/10/2025',
-    isFeatured: true,
-    cardColor: Color(0xFFF5F0C8),
-    textColor: Color(0xFF1C1C1E),
-  ),
-  const Note(
-    title: 'Nota 2',
-    date: '24/10/2025',
-    cardColor: Color(0xFF2C2C2E),
-    tags: [
-      NoteTag(label: 'Gym', color: Color(0xFF3B82F6)),
-      NoteTag(label: 'Pagos', color: Color(0xFF22C55E)),
-    ],
-  ),
-  const Note(
-    title: 'Nota 3',
-    body: 'Comprar comida del perro',
-    date: '23/10/2025',
-    cardColor: Color(0xFF2C2C2E),
-    textColor: Color(0xFFF59E0B),
-  ),
+    const Note(
+      title: 'Parcial Final',
+      body: 'El dia sabado 01 de Noviembre es el parcial final de investigacion',
+      date: '25/10/2025',
+      isFeatured: true,
+      cardColor: Color(0xFFF5F0C8),
+      textColor: Color(0xFF1C1C1E),
+    ),
+    const Note(
+      title: 'Nota 2',
+      date: '24/10/2025',
+      cardColor: Color(0xFF2C2C2E),
+      tags: [
+        NoteTag(label: 'Gym', color: Color(0xFF3B82F6)),
+        NoteTag(label: 'Pagos', color: Color(0xFF22C55E)),
+      ],
+    ),
+    const Note(
+      title: 'Nota 3',
+      body: 'Comprar comida del perro',
+      date: '23/10/2025',
+      cardColor: Color(0xFF2C2C2E),
+      textColor: Color(0xFFF59E0B),
+    ),
   ];
 
-  //Con este método se agrega las notas recibidas desde AddNoteScreen
+  // Agrega una nota nueva recibida desde AddNoteScreen
   void _addNote(Note note) {
     setState(() {
       _notes.insert(0, note);
     });
   }
 
-  //Se separa la lógica de featuredNotes y smallNotes para que múltiples destacadas funcionen correctamente.
+  /// Reemplaza la nota en el índice dado con la versión editada
+  void _updateNote(int index, Note notaActualizada) {
+    setState(() {
+      _notes[index] = notaActualizada;
+    });
+  }
+
+  /// Navega a [OpenNoteScreen] con animación Hero de expansión.
+  /// El tag Hero usa el índice para que cada nota tenga un tag único.
+  /// Al regresar, si hubo cambios los aplica con _updateNote.
+  Future<void> _openNote(BuildContext context, int index) async {
+    final notaActualizada = await Navigator.push<Note>(
+      context,
+      PageRouteBuilder(
+        // Duración de la animación de entrada y salida
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 350),
+        pageBuilder: (_, __, ___) => OpenNoteScreen(note: _notes[index]),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Curva suave para la animación de expansión
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeInOutCubic,
+          );
+          // Combinamos fade + scale para el efecto de expansión
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+
+    if (notaActualizada != null) {
+      _updateNote(index, notaActualizada);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final featuredNotes = _notes.where((n) => n.isFeatured).toList();
-    final smallNotes = _notes.where((n) => !n.isFeatured).toList();
+    final featuredNotes = _notes
+        .asMap()
+        .entries
+        .where((e) => e.value.isFeatured)
+        .toList();
+    final smallNotes = _notes
+        .asMap()
+        .entries
+        .where((e) => !e.value.isFeatured)
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFF1C1C1E),
@@ -122,15 +170,18 @@ class _NotesScreenState extends State<NotesScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      //Aquí van las notas destacadas
+                      // Notas destacadas con animación al tocar
                       ...featuredNotes.map(
-                        (note) => Padding(
+                        (entry) => Padding(
                           padding: const EdgeInsets.only(bottom: 14),
-                          child: _FeaturedNoteCard(note: note),
+                          child: _AnimatedNoteCard(
+                            onTap: () => _openNote(context, entry.key),
+                            child: _FeaturedNoteCard(note: entry.value),
+                          ),
                         ),
                       ),
- 
-                      // Notas pequeñas en grid
+
+                      // Notas pequeñas en grid con animación al tocar
                       if (smallNotes.isNotEmpty)
                         GridView.builder(
                           shrinkWrap: true,
@@ -143,8 +194,10 @@ class _NotesScreenState extends State<NotesScreen> {
                             crossAxisSpacing: 14,
                             childAspectRatio: 1.05,
                           ),
-                          itemBuilder: (context, index) =>
-                              _SmallNoteCard(note: smallNotes[index]),
+                          itemBuilder: (context, i) => _AnimatedNoteCard(
+                            onTap: () => _openNote(context, smallNotes[i].key),
+                            child: _SmallNoteCard(note: smallNotes[i].value),
+                          ),
                         ),
                       const SizedBox(height: 16),
                     ],
@@ -157,7 +210,6 @@ class _NotesScreenState extends State<NotesScreen> {
       ),
       bottomNavigationBar: _BottomBar(
         onAddTap: () async {
-          // Navega a AddNoteScreen y espera la nota de retorno
           final newNote = await Navigator.push<Note>(
             context,
             MaterialPageRoute(builder: (_) => const AddNoteScreen()),
@@ -179,6 +231,68 @@ class _NotesScreenState extends State<NotesScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+}
+
+// ── Widget: Tarjeta con animación de escala al presionar ─────────────────────
+/// Envuelve cualquier tarjeta de nota y le agrega una animación de
+/// "press" (scale down) al tocarla, simulando que se expande hacia la pantalla.
+
+class _AnimatedNoteCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _AnimatedNoteCard({required this.child, required this.onTap});
+
+  @override
+  State<_AnimatedNoteCard> createState() => _AnimatedNoteCardState();
+}
+
+class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    // La tarjeta se achica ligeramente al presionar (efecto de "hundirse")
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(_) => _controller.forward();
+
+  void _onTapUp(_) async {
+    // Espera que termine la animación de press antes de navegar
+    await _controller.reverse();
+    widget.onTap();
+  }
+
+  void _onTapCancel() => _controller.reverse();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnim,
+        child: widget.child,
       ),
     );
   }
@@ -320,7 +434,8 @@ class _SmallNoteCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Icon(Icons.bookmark_rounded, color: Colors.white38, size: 18),
+              const Icon(Icons.bookmark_rounded,
+                  color: Colors.white38, size: 18),
             ],
           ),
           const SizedBox(height: 10),
@@ -366,7 +481,6 @@ class _SmallNoteCard extends StatelessWidget {
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
-          
         ],
       ),
     );
@@ -374,7 +488,7 @@ class _SmallNoteCard extends StatelessWidget {
 }
 
 // ── Widget: Bottom Navigation Bar ───────────────────────────────────────────
-//Cambios: este botón ahora recibe un OnAddTap con el que navegamos a AddNoteScreen con Navigator.Push
+
 class _BottomBar extends StatelessWidget {
   final VoidCallback onAddTap;
   const _BottomBar({required this.onAddTap});
