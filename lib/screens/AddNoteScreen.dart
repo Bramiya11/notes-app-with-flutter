@@ -1,6 +1,8 @@
+// ignore_for_file: file_names
+ 
 import 'package:flutter/material.dart';
-import 'package:notes_app_with_flutter/screens/HomeScreen.dart';
-
+import 'package:notes_app_with_flutter/models/models.dart';
+ 
 class AddNoteScreen extends StatefulWidget {
   const AddNoteScreen({super.key});
  
@@ -21,15 +23,16 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   final List<NoteTag> _tags = [];
  
   // ── Paleta de colores para la tarjeta ────────────────────────────────────
+  // Incluye los 2 colores nuevos agregados por tu amigo (rosado y azul)
   final List<Color> _cardColors = [
-    const Color(0xFF2C2C2E), // Gris oscuro (default)
-    const Color(0xFFF5F0C8), // Crema (como la nota destacada)
-    const Color(0xFF1E3A5F), // Azul marino
-    const Color(0xFF2D4A3E), // Verde oscuro
-    const Color(0xFF4A1E2D), // Rojo oscuro
-    const Color(0xFF3D2C6B), // Morado oscuro
+    const Color(0xFF2C2C2E),
+    const Color(0xFFF5F0C8),
+    const Color(0xFF1E3A5F),
+    const Color(0xFF2D4A3E),
+    const Color(0xFF4A1E2D),
+    const Color(0xFF3D2C6B),
     const Color.fromARGB(255, 236, 22, 165), // rosado
-    const Color.fromARGB(255, 73, 8, 252), // azul
+    const Color.fromARGB(255, 73, 8, 252),   // azul
   ];
  
   // ── Paleta de colores para el texto ──────────────────────────────────────
@@ -61,7 +64,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     super.dispose();
   }
  
-  // ── Agrega un tag a la lista ──────────────────────────────────────────────
   void _addTag() {
     final label = _tagController.text.trim();
     if (label.isEmpty) return;
@@ -71,12 +73,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     });
   }
  
-  // ── Elimina un tag ────────────────────────────────────────────────────────
-  void _removeTag(int index) {
-    setState(() => _tags.removeAt(index));
-  }
+  void _removeTag(int index) => setState(() => _tags.removeAt(index));
  
-  // ── Construye y devuelve la nota a NotesScreen ───────────────────────────
   void _saveNote() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -94,19 +92,20 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     final date =
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
  
-    final note = Note(
-      title: title,
-      body: _bodyController.text.trim().isEmpty
-          ? null
-          : _bodyController.text.trim(),
-      date: date,
-      isFeatured: _isFeatured,
-      tags: List.from(_tags),
-      cardColor: _selectedCardColor,
-      textColor: _selectedTextColor,
+    Navigator.pop(
+      context,
+      Note(
+        title: title,
+        body: _bodyController.text.trim().isEmpty
+            ? null
+            : _bodyController.text.trim(),
+        date: date,
+        isFeatured: _isFeatured,
+        tags: List.from(_tags),
+        cardColor: _selectedCardColor,
+        textColor: _selectedTextColor,
+      ),
     );
- 
-    Navigator.pop(context, note);
   }
  
   @override
@@ -123,7 +122,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Botón volver
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -146,7 +144,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       letterSpacing: 0.3,
                     ),
                   ),
-                  // Botón guardar
                   GestureDetector(
                     onTap: _saveNote,
                     child: Container(
@@ -173,7 +170,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   children: [
                     const SizedBox(height: 8),
  
-                    // ── Preview de la nota ───────────────────────────────
                     _NotePreview(
                       title: _titleController.text,
                       body: _bodyController.text,
@@ -184,7 +180,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 24),
  
-                    // ── Título ───────────────────────────────────────────
                     _SectionLabel('Título'),
                     const SizedBox(height: 8),
                     _StyledTextField(
@@ -194,7 +189,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 20),
  
-                    // ── Cuerpo ───────────────────────────────────────────
                     _SectionLabel('Contenido'),
                     const SizedBox(height: 8),
                     _StyledTextField(
@@ -205,16 +199,15 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 20),
  
-                    // ── Toggle destacada ─────────────────────────────────
                     _SectionLabel('Destacada'),
                     const SizedBox(height: 8),
                     _ToggleFeatured(
                       value: _isFeatured,
-                      onChanged: (val) => setState(() => _isFeatured = val),
+                      onChanged: (val) =>
+                          setState(() => _isFeatured = val),
                     ),
                     const SizedBox(height: 20),
  
-                    // ── Color de tarjeta ─────────────────────────────────
                     _SectionLabel('Color de tarjeta'),
                     const SizedBox(height: 12),
                     _ColorPicker(
@@ -225,7 +218,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 20),
  
-                    // ── Color de texto ────────────────────────────────────
                     _SectionLabel('Color de texto'),
                     const SizedBox(height: 12),
                     _ColorPicker(
@@ -236,11 +228,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 20),
  
-                    // ── Tags ──────────────────────────────────────────────
                     _SectionLabel('Tags'),
                     const SizedBox(height: 8),
- 
-                    // Input + selector de color de tag
                     Row(
                       children: [
                         Expanded(
@@ -251,19 +240,19 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Mini paleta de color para el tag
                         SizedBox(
                           height: 52,
                           child: Row(
                             children: _tagColors.map((c) {
                               final isSelected = c == _selectedTagColor;
                               return GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedTagColor = c),
+                                onTap: () => setState(
+                                    () => _selectedTagColor = c),
                                 child: AnimatedContainer(
                                   duration:
                                       const Duration(milliseconds: 150),
-                                  margin: const EdgeInsets.only(right: 6),
+                                  margin:
+                                      const EdgeInsets.only(right: 6),
                                   width: isSelected ? 28 : 22,
                                   height: isSelected ? 28 : 22,
                                   decoration: BoxDecoration(
@@ -271,7 +260,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                                     shape: BoxShape.circle,
                                     border: isSelected
                                         ? Border.all(
-                                            color: Colors.white, width: 2)
+                                            color: Colors.white,
+                                            width: 2)
                                         : null,
                                   ),
                                 ),
@@ -296,7 +286,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       ],
                     ),
  
-                    // Lista de tags agregados
                     if (_tags.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Wrap(
@@ -312,7 +301,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                               color: const Color(0xFF2C2C2E),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: tag.color.withValues(alpha: 0.6),
+                                  color:
+                                      tag.color.withValues(alpha: 0.6),
                                   width: 1.5),
                             ),
                             child: Row(
@@ -322,22 +312,21 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: tag.color,
-                                    shape: BoxShape.circle,
-                                  ),
+                                      color: tag.color,
+                                      shape: BoxShape.circle),
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  tag.label,
-                                  style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13),
-                                ),
+                                Text(tag.label,
+                                    style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13)),
                                 const SizedBox(width: 6),
                                 GestureDetector(
                                   onTap: () => _removeTag(i),
-                                  child: const Icon(Icons.close_rounded,
-                                      color: Colors.white38, size: 14),
+                                  child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white38,
+                                      size: 14),
                                 ),
                               ],
                             ),
@@ -347,8 +336,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ],
  
                     const SizedBox(height: 32),
- 
-                    // ── Botón guardar ────────────────────────────────────
                     SizedBox(
                       width: double.infinity,
                       height: 54,
@@ -358,17 +345,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           backgroundColor: const Color(0xFFF5C518),
                           foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                              borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Guardar nota',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        child: const Text('Guardar nota',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700)),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -383,7 +366,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   }
 }
  
-// ── Widget: Preview de la nota ────────────────────────────────────────────────
+// ── Widgets privados de AddNoteScreen ────────────────────────────────────────
  
 class _NotePreview extends StatelessWidget {
   final String title;
@@ -404,23 +387,20 @@ class _NotePreview extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
-    final displayTitle =
-        title.isEmpty ? 'Título de la nota...' : title;
+    final displayTitle = title.isEmpty ? 'Título de la nota...' : title;
     final displayBody = body.isEmpty ? null : body;
-    final fgColor = title.isEmpty ? textColor.withValues(alpha: 0.3) : textColor;
+    final fgColor =
+        title.isEmpty ? textColor.withValues(alpha: 0.3) : textColor;
  
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Vista previa',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 1.0,
-          ),
-        ),
+        Text('Vista previa',
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.4),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.0)),
         const SizedBox(height: 8),
         Container(
           width: double.infinity,
@@ -429,64 +409,58 @@ class _NotePreview extends StatelessWidget {
             color: cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 1,
-            ),
+                color: Colors.white.withValues(alpha: 0.08), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      displayTitle,
-                      style: TextStyle(
-                        color: fgColor,
-                        fontSize: isFeatured ? 22 : 16,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                  if (isFeatured)
-                    Icon(Icons.star_rounded,
-                        color: const Color(0xFFF5C518).withValues(alpha: 0.8),
-                        size: 18),
-                ],
-              ),
+              Row(children: [
+                Expanded(
+                    child: Text(displayTitle,
+                        style: TextStyle(
+                            color: fgColor,
+                            fontSize: isFeatured ? 22 : 16,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2))),
+                if (isFeatured)
+                  Icon(Icons.star_rounded,
+                      color: const Color(0xFFF5C518)
+                          .withValues(alpha: 0.8),
+                      size: 18),
+              ]),
               if (displayBody != null) ...[
                 const SizedBox(height: 8),
-                Text(
-                  displayBody,
-                  style: TextStyle(
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(displayBody,
+                    style: TextStyle(
+                        color: textColor.withValues(alpha: 0.7),
+                        fontSize: 13,
+                        height: 1.45),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis),
               ],
               if (tags.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 6,
-                  children: tags.map((t) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8, height: 8,
-                        decoration: BoxDecoration(
-                          color: t.color, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(t.label,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12)),
-                      const SizedBox(width: 8),
-                    ],
-                  )).toList(),
+                  children: tags
+                      .map((t) => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                      color: t.color,
+                                      shape: BoxShape.circle)),
+                              const SizedBox(width: 4),
+                              Text(t.label,
+                                  style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12)),
+                              const SizedBox(width: 8),
+                            ],
+                          ))
+                      .toList(),
                 ),
               ],
             ],
@@ -497,26 +471,17 @@ class _NotePreview extends StatelessWidget {
   }
 }
  
-// ── Widget: Label de sección ──────────────────────────────────────────────────
- 
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
  
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
+  Widget build(BuildContext context) => Text(text,
       style: const TextStyle(
-        color: Colors.white,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600));
 }
- 
-// ── Widget: TextField estilizado ──────────────────────────────────────────────
  
 class _StyledTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -543,18 +508,17 @@ class _StyledTextField extends StatelessWidget {
       style: const TextStyle(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.25)),
+        hintStyle:
+            TextStyle(color: Colors.white.withValues(alpha: 0.25)),
         filled: true,
         fillColor: const Color(0xFF2C2C2E),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-              color: Color(0xFFF5C518), width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+                color: Color(0xFFF5C518), width: 1.5)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
@@ -562,12 +526,9 @@ class _StyledTextField extends StatelessWidget {
   }
 }
  
-// ── Widget: Toggle destacada ──────────────────────────────────────────────────
- 
 class _ToggleFeatured extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
- 
   const _ToggleFeatured({required this.value, required this.onChanged});
  
   @override
@@ -589,39 +550,31 @@ class _ToggleFeatured extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.star_rounded,
-                  color: value
-                      ? const Color(0xFFF5C518)
-                      : Colors.white38,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Text(
+            Row(children: [
+              Icon(Icons.star_rounded,
+                  color:
+                      value ? const Color(0xFFF5C518) : Colors.white38,
+                  size: 20),
+              const SizedBox(width: 10),
+              Text(
                   value
                       ? 'Nota destacada (tarjeta grande)'
                       : 'Marcar como destacada',
                   style: TextStyle(
-                    color: value ? Colors.white : Colors.white54,
-                    fontSize: 14,
-                    fontWeight:
-                        value ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
+                      color: value ? Colors.white : Colors.white54,
+                      fontSize: 14,
+                      fontWeight: value
+                          ? FontWeight.w600
+                          : FontWeight.normal)),
+            ]),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 44,
               height: 26,
               decoration: BoxDecoration(
-                color: value
-                    ? const Color(0xFFF5C518)
-                    : Colors.white12,
-                borderRadius: BorderRadius.circular(13),
-              ),
+                  color:
+                      value ? const Color(0xFFF5C518) : Colors.white12,
+                  borderRadius: BorderRadius.circular(13)),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 200),
                 alignment: value
@@ -632,10 +585,8 @@ class _ToggleFeatured extends StatelessWidget {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color:
-                        value ? Colors.black : Colors.white54,
-                    shape: BoxShape.circle,
-                  ),
+                      color: value ? Colors.black : Colors.white54,
+                      shape: BoxShape.circle),
                 ),
               ),
             ),
@@ -645,8 +596,6 @@ class _ToggleFeatured extends StatelessWidget {
     );
   }
 }
- 
-// ── Widget: Selector de color ─────────────────────────────────────────────────
  
 class _ColorPicker extends StatelessWidget {
   final List<Color> colors;
@@ -661,30 +610,32 @@ class _ColorPicker extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: colors.map((c) {
         final isSelected = c == selected;
         return GestureDetector(
           onTap: () => onSelect(c),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            margin: const EdgeInsets.only(right: 10),
             width: isSelected ? 36 : 30,
             height: isSelected ? 36 : 30,
             decoration: BoxDecoration(
               color: c,
               shape: BoxShape.circle,
               border: isSelected
-                  ? Border.all(color: const Color(0xFFF5C518), width: 2.5)
+                  ? Border.all(
+                      color: const Color(0xFFF5C518), width: 2.5)
                   : Border.all(
-                      color: Colors.white.withValues(alpha: 0.15), width: 1),
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: c.withValues(alpha: 0.5),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
+                          color: c.withValues(alpha: 0.5),
+                          blurRadius: 8,
+                          spreadRadius: 1)
                     ]
                   : null,
             ),

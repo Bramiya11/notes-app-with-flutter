@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'screens/WelcomeScreen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Oculta barra de estado (arriba) y barra de navegación (abajo)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
 

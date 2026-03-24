@@ -1,7 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
-import 'HomeScreen.dart';
+import 'package:notes_app_with_flutter/models/models.dart';
 
 /// Determina si un color de fondo es claro u oscuro usando luminancia relativa.
 /// Retorna [Colors.black] si el fondo es claro, [Colors.white] si es oscuro.

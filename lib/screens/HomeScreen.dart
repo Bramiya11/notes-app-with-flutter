@@ -1,47 +1,21 @@
 // ignore_for_file: file_names
-
+ 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:notes_app_with_flutter/models/models.dart';
+import 'VoiceNoteScreen.dart'; // VoiceNoteCard vive aquí — no redefinir
 import 'AddNoteScreen.dart';
 import 'OpenNoteScreen.dart';
-
-// ── Modelo de datos ──────────────────────────────────────────────────────────
-
-class Note {
-  final String title;
-  final String? body;
-  final String date;
-  final bool isFeatured;
-  final List<NoteTag> tags;
-  final Color? cardColor;
-  final Color? textColor;
-
-  const Note({
-    required this.title,
-    this.body,
-    required this.date,
-    this.isFeatured = false,
-    this.tags = const [],
-    this.cardColor,
-    this.textColor,
-  });
-}
-
-class NoteTag {
-  final String label;
-  final Color color;
-
-  const NoteTag({required this.label, required this.color});
-}
-
+ 
 // ── Pantalla de notas ────────────────────────────────────────────────────────
-
+ 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
-
+ 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
 }
-
+ 
 class _NotesScreenState extends State<NotesScreen> {
   final List<Note> _notes = [
     const Note(
@@ -69,39 +43,31 @@ class _NotesScreenState extends State<NotesScreen> {
       textColor: Color(0xFFF59E0B),
     ),
   ];
-
-  // Agrega una nota nueva recibida desde AddNoteScreen
-  void _addNote(Note note) {
-    setState(() {
-      _notes.insert(0, note);
-    });
-  }
-
+ 
+  final List<VoiceNote> _voiceNotes = [];
+ 
+  void _addNote(Note note) => setState(() => _notes.insert(0, note));
+  void _addVoiceNote(VoiceNote vn) => setState(() => _voiceNotes.insert(0, vn));
+ 
   /// Reemplaza la nota en el índice dado con la versión editada
   void _updateNote(int index, Note notaActualizada) {
-    setState(() {
-      _notes[index] = notaActualizada;
-    });
+    setState(() => _notes[index] = notaActualizada);
   }
-
-  /// Navega a [OpenNoteScreen] con animación Hero de expansión.
-  /// El tag Hero usa el índice para que cada nota tenga un tag único.
+ 
+  /// Navega a [OpenNoteScreen] con animación de expansión fade+scale.
   /// Al regresar, si hubo cambios los aplica con _updateNote.
   Future<void> _openNote(BuildContext context, int index) async {
     final notaActualizada = await Navigator.push<Note>(
       context,
       PageRouteBuilder(
-        // Duración de la animación de entrada y salida
         transitionDuration: const Duration(milliseconds: 400),
         reverseTransitionDuration: const Duration(milliseconds: 350),
         pageBuilder: (_, __, ___) => OpenNoteScreen(note: _notes[index]),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Curva suave para la animación de expansión
           final curved = CurvedAnimation(
             parent: animation,
             curve: Curves.easeInOutCubic,
           );
-          // Combinamos fade + scale para el efecto de expansión
           return FadeTransition(
             opacity: curved,
             child: ScaleTransition(
@@ -112,25 +78,20 @@ class _NotesScreenState extends State<NotesScreen> {
         },
       ),
     );
-
+ 
     if (notaActualizada != null) {
       _updateNote(index, notaActualizada);
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
-    final featuredNotes = _notes
-        .asMap()
-        .entries
-        .where((e) => e.value.isFeatured)
-        .toList();
-    final smallNotes = _notes
-        .asMap()
-        .entries
-        .where((e) => !e.value.isFeatured)
-        .toList();
-
+    // Usamos .asMap().entries para conservar el índice original de cada nota
+    final featuredNotes =
+        _notes.asMap().entries.where((e) => e.value.isFeatured).toList();
+    final smallNotes =
+        _notes.asMap().entries.where((e) => !e.value.isFeatured).toList();
+ 
     return Scaffold(
       backgroundColor: const Color(0xFF1C1C1E),
       body: SafeArea(
@@ -138,7 +99,8 @@ class _NotesScreenState extends State<NotesScreen> {
           children: [
             // ── App Bar ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -156,20 +118,45 @@ class _NotesScreenState extends State<NotesScreen> {
                 ],
               ),
             ),
-
+ 
             // ── Filtro Todo / Favorito ───────────────────────────────────
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: _FilterBar(),
             ),
-
+ 
             // ── Lista de notas ───────────────────────────────────────────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SingleChildScrollView(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Notas de voz
+                      if (_voiceNotes.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'NOTAS DE VOZ',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        ..._voiceNotes.map(
+                          (vn) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            // VoiceNoteCard importada desde VoiceNoteScreen.dart
+                            child: VoiceNoteCard(voiceNote: vn),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+ 
                       // Notas destacadas con animación al tocar
                       ...featuredNotes.map(
                         (entry) => Padding(
@@ -180,7 +167,7 @@ class _NotesScreenState extends State<NotesScreen> {
                           ),
                         ),
                       ),
-
+ 
                       // Notas pequeñas en grid con animación al tocar
                       if (smallNotes.isNotEmpty)
                         GridView.builder(
@@ -195,7 +182,8 @@ class _NotesScreenState extends State<NotesScreen> {
                             childAspectRatio: 1.05,
                           ),
                           itemBuilder: (context, i) => _AnimatedNoteCard(
-                            onTap: () => _openNote(context, smallNotes[i].key),
+                            onTap: () =>
+                                _openNote(context, smallNotes[i].key),
                             child: _SmallNoteCard(note: smallNotes[i].value),
                           ),
                         ),
@@ -216,10 +204,17 @@ class _NotesScreenState extends State<NotesScreen> {
           );
           if (newNote != null) _addNote(newNote);
         },
+        onVoiceTap: () async {
+          final vn = await Navigator.push<VoiceNote>(
+            context,
+            MaterialPageRoute(builder: (_) => const VoiceNoteScreen()),
+          );
+          if (vn != null) _addVoiceNote(vn);
+        },
       ),
     );
   }
-
+ 
   Widget _iconButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -235,26 +230,24 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 }
-
+ 
 // ── Widget: Tarjeta con animación de escala al presionar ─────────────────────
-/// Envuelve cualquier tarjeta de nota y le agrega una animación de
-/// "press" (scale down) al tocarla, simulando que se expande hacia la pantalla.
-
+ 
 class _AnimatedNoteCard extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
-
+ 
   const _AnimatedNoteCard({required this.child, required this.onTap});
-
+ 
   @override
   State<_AnimatedNoteCard> createState() => _AnimatedNoteCardState();
 }
-
+ 
 class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
-
+ 
   @override
   void initState() {
     super.initState();
@@ -262,28 +255,26 @@ class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
       vsync: this,
       duration: const Duration(milliseconds: 120),
     );
-    // La tarjeta se achica ligeramente al presionar (efecto de "hundirse")
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
-
+ 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
+ 
   void _onTapDown(_) => _controller.forward();
-
+ 
   void _onTapUp(_) async {
-    // Espera que termine la animación de press antes de navegar
     await _controller.reverse();
     widget.onTap();
   }
-
+ 
   void _onTapCancel() => _controller.reverse();
-
+ 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -297,20 +288,20 @@ class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
     );
   }
 }
-
+ 
 // ── Widget: Barra de filtros ─────────────────────────────────────────────────
-
+ 
 class _FilterBar extends StatefulWidget {
   const _FilterBar();
-
+ 
   @override
   State<_FilterBar> createState() => _FilterBarState();
 }
-
+ 
 class _FilterBarState extends State<_FilterBar> {
   int _selected = 0;
   final _labels = ['Todo', 'Favorito'];
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -327,9 +318,11 @@ class _FilterBarState extends State<_FilterBar> {
             onTap: () => setState(() => _selected = i),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               decoration: BoxDecoration(
-                color: active ? const Color(0xFFF5C518) : Colors.transparent,
+                color:
+                    active ? const Color(0xFFF5C518) : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -347,92 +340,78 @@ class _FilterBarState extends State<_FilterBar> {
     );
   }
 }
-
+ 
 // ── Widget: Nota destacada (grande) ─────────────────────────────────────────
-
+ 
 class _FeaturedNoteCard extends StatelessWidget {
   final Note note;
   const _FeaturedNoteCard({required this.note});
-
+ 
   @override
   Widget build(BuildContext context) {
     final bgColor = note.cardColor ?? const Color(0xFF2C2C2E);
     final fgColor = note.textColor ?? Colors.white;
-
+ 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
+          color: bgColor, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            note.title,
-            style: TextStyle(
-              color: fgColor,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
-          ),
+          Text(note.title,
+              style: TextStyle(
+                  color: fgColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2)),
           if (note.body != null) ...[
             const SizedBox(height: 10),
-            Text(
-              note.body!,
-              style: TextStyle(
-                color: fgColor.withValues(alpha: 0.75),
-                fontSize: 15,
-                height: 1.5,
-              ),
-            ),
+            Text(note.body!,
+                style: TextStyle(
+                    color: fgColor.withValues(alpha: 0.75),
+                    fontSize: 15,
+                    height: 1.5)),
           ],
           const SizedBox(height: 18),
-          Text(
-            note.date,
-            style: TextStyle(
-              color: fgColor.withValues(alpha: 0.5),
-              fontSize: 13,
-            ),
-          ),
+          Text(note.date,
+              style: TextStyle(
+                  color: fgColor.withValues(alpha: 0.5), fontSize: 13)),
         ],
       ),
     );
   }
 }
-
+ 
 // ── Widget: Nota pequeña (grid) ──────────────────────────────────────────────
-
+ 
 class _SmallNoteCard extends StatelessWidget {
   final Note note;
   const _SmallNoteCard({required this.note});
-
+ 
   @override
   Widget build(BuildContext context) {
     final bgColor = note.cardColor ?? const Color(0xFF2C2C2E);
     final fgColor = note.textColor ?? Colors.white;
-
+ 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
+          color: bgColor, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                note.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+              Expanded(
+                child: Text(note.title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700),
+                    overflow: TextOverflow.ellipsis),
               ),
               const Icon(Icons.bookmark_rounded,
                   color: Colors.white38, size: 18),
@@ -443,56 +422,42 @@ class _SmallNoteCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: note.tags
-                  .map(
-                    (tag) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
+                  .map((tag) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(children: [
                           Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: tag.color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                  color: tag.color,
+                                  shape: BoxShape.circle)),
                           const SizedBox(width: 8),
-                          Text(
-                            tag.label,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
+                          Text(tag.label,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 13)),
+                        ]),
+                      ))
                   .toList(),
             )
           else if (note.body != null)
-            Text(
-              note.body!,
-              style: TextStyle(
-                color: fgColor,
-                fontSize: 13,
-                height: 1.45,
-              ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text(note.body!,
+                style:
+                    TextStyle(color: fgColor, fontSize: 13, height: 1.45),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis),
         ],
       ),
     );
   }
 }
-
+ 
 // ── Widget: Bottom Navigation Bar ───────────────────────────────────────────
-
+ 
 class _BottomBar extends StatelessWidget {
   final VoidCallback onAddTap;
-  const _BottomBar({required this.onAddTap});
-
+  final VoidCallback onVoiceTap;
+  const _BottomBar({required this.onAddTap, required this.onVoiceTap});
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -505,17 +470,41 @@ class _BottomBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _NavIcon(icon: Icons.present_to_all_rounded, onTap: () {}),
-          GestureDetector(
-            onTap: onAddTap,
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5C518),
-                shape: BoxShape.circle,
+          Row(
+            children: [
+              GestureDetector(
+                onTap: onVoiceTap,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3D3D3F),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color:
+                          const Color(0xFFF5C518).withValues(alpha: 0.45),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Icon(Icons.mic_rounded,
+                      color: Color(0xFFF5C518), size: 24),
+                ),
               ),
-              child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
-            ),
+              const SizedBox(width: 14),
+              GestureDetector(
+                onTap: onAddTap,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5C518),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add_rounded,
+                      color: Colors.black, size: 30),
+                ),
+              ),
+            ],
           ),
           _NavIcon(icon: Icons.delete_outline_rounded, onTap: () {}),
         ],
@@ -523,12 +512,12 @@ class _BottomBar extends StatelessWidget {
     );
   }
 }
-
+ 
 class _NavIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   const _NavIcon({required this.icon, required this.onTap});
-
+ 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
