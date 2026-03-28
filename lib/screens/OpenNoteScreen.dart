@@ -1,7 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
-import 'package:notes_app_with_flutter/models/models.dart';
+import '../models/models.dart'; // Note y NoteTag vienen de aquí
 
 /// Determina si un color de fondo es claro u oscuro usando luminancia relativa.
 /// Retorna [Colors.black] si el fondo es claro, [Colors.white] si es oscuro.
@@ -49,14 +49,12 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
     super.dispose();
   }
 
-  /// REGRESAR: cierra la pantalla sin devolver ningún dato.
-  /// HomeScreen recibirá null y no actualizará la nota.
+  /// REGRESAR: cierra la pantalla sin devolver ningún dato (descarta cambios)
   void _descartarYRegresar() {
     Navigator.pop(context, null);
   }
 
-  /// GUARDAR: construye la nota actualizada y la devuelve a HomeScreen.
-  /// HomeScreen recibirá la nota modificada y actualizará la lista.
+  /// GUARDAR: construye la nota actualizada y la devuelve a HomeScreen
   void _guardarYRegresar() {
     final notaActualizada = Note(
       title: _titleController.text.trim().isEmpty
@@ -82,8 +80,6 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
     final dateColor = _fgColor.withValues(alpha: 0.45);
     final dividerColor = _fgColor.withValues(alpha: 0.1);
 
-    // PopScope con canPop: true para que el botón físico de atrás
-    // también descarte cambios (sin guardar)
     return PopScope(
       canPop: true,
       child: Scaffold(
@@ -93,8 +89,7 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
             children: [
               // ── Barra superior ─────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -104,7 +99,6 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
                       onTap: _descartarYRegresar,
                     ),
 
-                    // Botones del lado derecho: clip y guardar
                     Row(
                       children: [
                         // Botón clip: adjuntar imagen (pendiente)
@@ -114,9 +108,7 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
                             // TODO: implementar adjuntar imagen
                           },
                         ),
-
                         const SizedBox(width: 10),
-
                         // Botón guardar (check verde): confirma los cambios
                         _SaveButton(onTap: _guardarYRegresar),
                       ],
@@ -168,19 +160,13 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
                           // Fecha (solo lectura)
                           Text(
                             widget.note.date,
-                            style: TextStyle(
-                              color: dateColor,
-                              fontSize: 13,
-                            ),
+                            style: TextStyle(color: dateColor, fontSize: 13),
                           ),
 
                           // Separador sutil
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Divider(
-                              color: dividerColor,
-                              thickness: 1,
-                            ),
+                            child: Divider(color: dividerColor, thickness: 1),
                           ),
 
                           // Campo editable: cuerpo de la nota
@@ -250,7 +236,7 @@ class _OpenNoteScreenState extends State<OpenNoteScreen> {
   }
 }
 
-// ── Botón superior genérico (fondo oscuro redondeado) ────────────────────────
+// ── Botón superior genérico ──────────────────────────────────────────────────
 
 class _TopButton extends StatelessWidget {
   final IconData icon;
@@ -276,8 +262,6 @@ class _TopButton extends StatelessWidget {
 }
 
 // ── Botón guardar (check verde circular) ─────────────────────────────────────
-/// Botón circular verde con ícono de check para confirmar y guardar los cambios.
-/// Tiene una pequeña animación de escala al presionarlo para dar feedback visual.
 
 class _SaveButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -332,14 +316,10 @@ class _SaveButtonState extends State<_SaveButton>
           width: 40,
           height: 40,
           decoration: const BoxDecoration(
-            color: Color(0xFF2ECC40), // Verde similar al de la imagen
+            color: Color(0xFF2ECC40),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.check_rounded,
-            color: Colors.white,
-            size: 22,
-          ),
+          child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
         ),
       ),
     );

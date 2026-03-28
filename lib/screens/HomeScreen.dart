@@ -1,22 +1,23 @@
 // ignore_for_file: file_names
- 
-import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:notes_app_with_flutter/models/models.dart';
-import 'VoiceNoteScreen.dart'; // VoiceNoteCard vive aquí — no redefinir
+import '../models/models.dart'; // Note y NoteTag vienen de aquí
 import 'AddNoteScreen.dart';
 import 'OpenNoteScreen.dart';
- 
-// ── Pantalla de notas ────────────────────────────────────────────────────────
- 
+import 'TrashScreen.dart';
+import 'VoiceNoteScreen.dart'; // Pantalla de grabación de voz
+
+// ── Pantalla principal ───────────────────────────────────────────────────────
+
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
- 
+
   @override
   State<NotesScreen> createState() => _NotesScreenState();
 }
- 
+
 class _NotesScreenState extends State<NotesScreen> {
+  // Lista de notas de texto activas
   final List<Note> _notes = [
     const Note(
       title: 'Parcial Final',
@@ -43,19 +44,38 @@ class _NotesScreenState extends State<NotesScreen> {
       textColor: Color(0xFFF59E0B),
     ),
   ];
- 
+
+  // Lista de notas de voz grabadas
   final List<VoiceNote> _voiceNotes = [];
- 
-  void _addNote(Note note) => setState(() => _notes.insert(0, note));
-  void _addVoiceNote(VoiceNote vn) => setState(() => _voiceNotes.insert(0, vn));
- 
-  /// Reemplaza la nota en el índice dado con la versión editada
+
+  // Lista de notas eliminadas (se muestran en TrashScreen)
+  final List<Note> _trashedNotes = [];
+
+  // Agrega una nota de texto nueva recibida desde AddNoteScreen
+  void _addNote(Note note) {
+    setState(() => _notes.insert(0, note));
+  }
+
+  // Agrega una nota de voz nueva recibida desde VoiceNoteScreen
+  void _addVoiceNote(VoiceNote voiceNote) {
+    setState(() => _voiceNotes.insert(0, voiceNote));
+  }
+
+  // Reemplaza la nota en el índice dado con la versión editada
   void _updateNote(int index, Note notaActualizada) {
     setState(() => _notes[index] = notaActualizada);
   }
- 
-  /// Navega a [OpenNoteScreen] con animación de expansión fade+scale.
-  /// Al regresar, si hubo cambios los aplica con _updateNote.
+
+  /// Mueve la nota del índice dado a la papelera
+  void _deleteNote(int index) {
+    setState(() {
+      _trashedNotes.insert(0, _notes[index]);
+      _notes.removeAt(index);
+    });
+  }
+
+  /// Navega a [OpenNoteScreen] con animación de expansión.
+  /// Si el usuario guardó cambios, actualiza la nota en la lista.
   Future<void> _openNote(BuildContext context, int index) async {
     final notaActualizada = await Navigator.push<Note>(
       context,
@@ -78,20 +98,58 @@ class _NotesScreenState extends State<NotesScreen> {
         },
       ),
     );
- 
+
     if (notaActualizada != null) {
       _updateNote(index, notaActualizada);
     }
   }
- 
+
+  /// Navega a [VoiceNoteScreen] y si el usuario guardó una grabación,
+  /// la agrega a la lista de notas de voz.
+  Future<void> _openVoiceRecorder(BuildContext context) async {
+    final voiceNote = await Navigator.push<VoiceNote>(
+      context,
+      MaterialPageRoute(builder: (_) => const VoiceNoteScreen()),
+    );
+    if (voiceNote != null) _addVoiceNote(voiceNote);
+  }
+
+  /// Navega a [TrashScreen] y al regresar sincroniza restauraciones y papelera
+  Future<void> _openTrash(BuildContext context) async {
+    final result = await Navigator.push<Map<String, List<Note>>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TrashScreen(trashedNotes: List.from(_trashedNotes)),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        if (result['restored'] != null) {
+          _notes.insertAll(0, result['restored']!);
+        }
+        if (result['trash'] != null) {
+          _trashedNotes
+            ..clear()
+            ..addAll(result['trash']!);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Usamos .asMap().entries para conservar el índice original de cada nota
-    final featuredNotes =
-        _notes.asMap().entries.where((e) => e.value.isFeatured).toList();
-    final smallNotes =
-        _notes.asMap().entries.where((e) => !e.value.isFeatured).toList();
- 
+    final featuredNotes = _notes
+        .asMap()
+        .entries
+        .where((e) => e.value.isFeatured)
+        .toList();
+    final smallNotes = _notes
+        .asMap()
+        .entries
+        .where((e) => !e.value.isFeatured)
+        .toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFF1C1C1E),
       body: SafeArea(
@@ -99,8 +157,7 @@ class _NotesScreenState extends State<NotesScreen> {
           children: [
             // ── App Bar ──────────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -118,57 +175,35 @@ class _NotesScreenState extends State<NotesScreen> {
                 ],
               ),
             ),
- 
+
             // ── Filtro Todo / Favorito ───────────────────────────────────
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: _FilterBar(),
             ),
- 
+
             // ── Lista de notas ───────────────────────────────────────────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Notas de voz
-                      if (_voiceNotes.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(
-                            'NOTAS DE VOZ',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                        ..._voiceNotes.map(
-                          (vn) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            // VoiceNoteCard importada desde VoiceNoteScreen.dart
-                            child: VoiceNoteCard(voiceNote: vn),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
- 
-                      // Notas destacadas con animación al tocar
+                      // Notas de texto destacadas con animación y botón eliminar
                       ...featuredNotes.map(
                         (entry) => Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: _AnimatedNoteCard(
                             onTap: () => _openNote(context, entry.key),
-                            child: _FeaturedNoteCard(note: entry.value),
+                            child: _FeaturedNoteCard(
+                              note: entry.value,
+                              onDelete: () => _deleteNote(entry.key),
+                            ),
                           ),
                         ),
                       ),
- 
-                      // Notas pequeñas en grid con animación al tocar
+
+                      // Notas de texto pequeñas en grid con botón eliminar
                       if (smallNotes.isNotEmpty)
                         GridView.builder(
                           shrinkWrap: true,
@@ -182,11 +217,26 @@ class _NotesScreenState extends State<NotesScreen> {
                             childAspectRatio: 1.05,
                           ),
                           itemBuilder: (context, i) => _AnimatedNoteCard(
-                            onTap: () =>
-                                _openNote(context, smallNotes[i].key),
-                            child: _SmallNoteCard(note: smallNotes[i].value),
+                            onTap: () => _openNote(context, smallNotes[i].key),
+                            child: _SmallNoteCard(
+                              note: smallNotes[i].value,
+                              onDelete: () => _deleteNote(smallNotes[i].key),
+                            ),
                           ),
                         ),
+
+                      // Notas de voz: se listan debajo de las notas de texto
+                      if (_voiceNotes.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        ...(_voiceNotes.map(
+                          (vn) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            // VoiceNoteCard viene definida en VoiceNoteScreen.dart
+                            child: VoiceNoteCard(voiceNote: vn),
+                          ),
+                        )),
+                      ],
+
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -204,17 +254,13 @@ class _NotesScreenState extends State<NotesScreen> {
           );
           if (newNote != null) _addNote(newNote);
         },
-        onVoiceTap: () async {
-          final vn = await Navigator.push<VoiceNote>(
-            context,
-            MaterialPageRoute(builder: (_) => const VoiceNoteScreen()),
-          );
-          if (vn != null) _addVoiceNote(vn);
-        },
+        // Abre VoiceNoteScreen al presionar el micrófono
+        onMicTap: () => _openVoiceRecorder(context),
+        onTrashTap: () => _openTrash(context),
       ),
     );
   }
- 
+
   Widget _iconButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -230,24 +276,24 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 }
- 
+
 // ── Widget: Tarjeta con animación de escala al presionar ─────────────────────
- 
+
 class _AnimatedNoteCard extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
- 
+
   const _AnimatedNoteCard({required this.child, required this.onTap});
- 
+
   @override
   State<_AnimatedNoteCard> createState() => _AnimatedNoteCardState();
 }
- 
+
 class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
- 
+
   @override
   void initState() {
     super.initState();
@@ -259,22 +305,22 @@ class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
- 
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
- 
+
   void _onTapDown(_) => _controller.forward();
- 
+
   void _onTapUp(_) async {
     await _controller.reverse();
     widget.onTap();
   }
- 
+
   void _onTapCancel() => _controller.reverse();
- 
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -288,20 +334,20 @@ class _AnimatedNoteCardState extends State<_AnimatedNoteCard>
     );
   }
 }
- 
+
 // ── Widget: Barra de filtros ─────────────────────────────────────────────────
- 
+
 class _FilterBar extends StatefulWidget {
   const _FilterBar();
- 
+
   @override
   State<_FilterBar> createState() => _FilterBarState();
 }
- 
+
 class _FilterBarState extends State<_FilterBar> {
   int _selected = 0;
   final _labels = ['Todo', 'Favorito'];
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -318,11 +364,9 @@ class _FilterBarState extends State<_FilterBar> {
             onTap: () => setState(() => _selected = i),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               decoration: BoxDecoration(
-                color:
-                    active ? const Color(0xFFF5C518) : Colors.transparent,
+                color: active ? const Color(0xFFF5C518) : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -340,65 +384,107 @@ class _FilterBarState extends State<_FilterBar> {
     );
   }
 }
- 
+
 // ── Widget: Nota destacada (grande) ─────────────────────────────────────────
- 
+
 class _FeaturedNoteCard extends StatelessWidget {
   final Note note;
-  const _FeaturedNoteCard({required this.note});
- 
+  final VoidCallback onDelete;
+
+  const _FeaturedNoteCard({required this.note, required this.onDelete});
+
   @override
   Widget build(BuildContext context) {
     final bgColor = note.cardColor ?? const Color(0xFF2C2C2E);
     final fgColor = note.textColor ?? Colors.white;
- 
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-          color: bgColor, borderRadius: BorderRadius.circular(20)),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(note.title,
-              style: TextStyle(
-                  color: fgColor,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  note.title,
+                  style: TextStyle(
+                    color: fgColor,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              // Botón papelera: mueve la nota a TrashScreen
+              GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    color: fgColor.withValues(alpha: 0.6),
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
           if (note.body != null) ...[
             const SizedBox(height: 10),
-            Text(note.body!,
-                style: TextStyle(
-                    color: fgColor.withValues(alpha: 0.75),
-                    fontSize: 15,
-                    height: 1.5)),
+            Text(
+              note.body!,
+              style: TextStyle(
+                color: fgColor.withValues(alpha: 0.75),
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
           ],
           const SizedBox(height: 18),
-          Text(note.date,
-              style: TextStyle(
-                  color: fgColor.withValues(alpha: 0.5), fontSize: 13)),
+          Text(
+            note.date,
+            style: TextStyle(
+              color: fgColor.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
   }
 }
- 
+
 // ── Widget: Nota pequeña (grid) ──────────────────────────────────────────────
- 
+
 class _SmallNoteCard extends StatelessWidget {
   final Note note;
-  const _SmallNoteCard({required this.note});
- 
+  final VoidCallback onDelete;
+
+  const _SmallNoteCard({required this.note, required this.onDelete});
+
   @override
   Widget build(BuildContext context) {
     final bgColor = note.cardColor ?? const Color(0xFF2C2C2E);
     final fgColor = note.textColor ?? Colors.white;
- 
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: bgColor, borderRadius: BorderRadius.circular(20)),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -406,15 +492,26 @@ class _SmallNoteCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(note.title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700),
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  note.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Icon(Icons.bookmark_rounded,
-                  color: Colors.white38, size: 18),
+              // Botón papelera pequeño para tarjetas del grid
+              GestureDetector(
+                onTap: onDelete,
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: fgColor.withValues(alpha: 0.5),
+                  size: 18,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -422,42 +519,64 @@ class _SmallNoteCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: note.tags
-                  .map((tag) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(children: [
+                  .map(
+                    (tag) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
                           Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                  color: tag.color,
-                                  shape: BoxShape.circle)),
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: tag.color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text(tag.label,
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 13)),
-                        ]),
-                      ))
+                          Text(
+                            tag.label,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
             )
           else if (note.body != null)
-            Text(note.body!,
-                style:
-                    TextStyle(color: fgColor, fontSize: 13, height: 1.45),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis),
+            Text(
+              note.body!,
+              style: TextStyle(
+                color: fgColor,
+                fontSize: 13,
+                height: 1.45,
+              ),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
         ],
       ),
     );
   }
 }
- 
+
 // ── Widget: Bottom Navigation Bar ───────────────────────────────────────────
- 
+// Orden: [presentación] [+ agregar nota] [🎤 grabar voz] [🗑 papelera]
+
 class _BottomBar extends StatelessWidget {
   final VoidCallback onAddTap;
-  final VoidCallback onVoiceTap;
-  const _BottomBar({required this.onAddTap, required this.onVoiceTap});
- 
+  final VoidCallback onMicTap;
+  final VoidCallback onTrashTap;
+
+  const _BottomBar({
+    required this.onAddTap,
+    required this.onMicTap,
+    required this.onTrashTap,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -469,55 +588,39 @@ class _BottomBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Ícono presentación (izquierda)
           _NavIcon(icon: Icons.present_to_all_rounded, onTap: () {}),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onVoiceTap,
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3D3D3F),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color:
-                          const Color(0xFFF5C518).withValues(alpha: 0.45),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: const Icon(Icons.mic_rounded,
-                      color: Color(0xFFF5C518), size: 24),
-                ),
+
+          // Botón central amarillo para agregar nueva nota de texto
+          GestureDetector(
+            onTap: onAddTap,
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5C518),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 14),
-              GestureDetector(
-                onTap: onAddTap,
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF5C518),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.add_rounded,
-                      color: Colors.black, size: 30),
-                ),
-              ),
-            ],
+              child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
+            ),
           ),
-          _NavIcon(icon: Icons.delete_outline_rounded, onTap: () {}),
+
+          // Ícono micrófono: abre VoiceNoteScreen para grabar una nota de voz
+          _NavIcon(icon: Icons.mic_rounded, onTap: onMicTap),
+
+          // Ícono papelera: abre TrashScreen con las notas eliminadas
+          _NavIcon(icon: Icons.delete_outline_rounded, onTap: onTrashTap),
         ],
       ),
     );
   }
 }
- 
+
 class _NavIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   const _NavIcon({required this.icon, required this.onTap});
- 
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
