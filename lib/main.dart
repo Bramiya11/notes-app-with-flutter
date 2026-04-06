@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:notes_app_with_flutter/services/NotificationService.dart';
 import 'screens/WelcomeScreen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await NotificationService.init();
   // Oculta barra de estado (arriba) y barra de navegación (abajo)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());

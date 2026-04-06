@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import 'package:notes_app_with_flutter/services/NotificationService.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/models.dart';
 import 'AddNoteScreen.dart';
@@ -140,7 +141,20 @@ class _NotesScreenState extends State<NotesScreen>
         },
       ),
     );
-    if (updated != null) _updateNote(index, updated);
+    if (updated != null) {
+    _updateNote(index, updated);
+    await NotificationService.showNotaEditada();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nota editada exitosamente'),
+          backgroundColor: Color(0xFF2ECC40),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
   }
 
   Future<void> _openFavoriteNote(BuildContext context, Note note) async {
@@ -272,7 +286,20 @@ class _NotesScreenState extends State<NotesScreen>
             context,
             MaterialPageRoute(builder: (_) => const AddNoteScreen()),
           );
-          if (newNote != null) _addNote(newNote);
+          if (newNote != null) {
+            _addNote(newNote);
+            await NotificationService.showNotaGuardada();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Nota guardada exitosamente'),
+                  backgroundColor: Color(0xFF2ECC40),
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
         },
         onMicTap: () => _openVoiceRecorder(context),
         onTrashTap: () => _openTrash(context),
