@@ -8,6 +8,9 @@ import 'AddNoteScreen.dart';
 import 'OpenNoteScreen.dart';
 import 'TrashScreen.dart';
 import 'VoiceNoteScreen.dart';
+import 'package:notes_app_with_flutter/services/DatabaseService.dart';
+import 'package:notes_app_with_flutter/services/FirestoreService.dart';
+import 'package:notes_app_with_flutter/services/APIService.dart';
 
 // ── Pantalla principal ───────────────────────────────────────────────────────
 
@@ -60,6 +63,17 @@ class _NotesScreenState extends State<NotesScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
+    _loadNotesFromDB();  
+  }
+
+  Future<void> _loadNotesFromDB() async {
+    final saved = await DatabaseService.getNotes();
+    if (saved.isNotEmpty) {
+      setState(() {
+        _notes.clear();
+        _notes.addAll(saved);
+      });
+    }
   }
 
   @override
@@ -80,26 +94,44 @@ class _NotesScreenState extends State<NotesScreen>
 
   // ── Acciones ─────────────────────────────────────────────────────────────
 
-  void _addNote(Note note) => setState(() => _notes.insert(0, note));
-  void _addVoiceNote(VoiceNote vn) => setState(() => _voiceNotes.insert(0, vn));
+  Future<void> _addNote(Note note) async {
+    // 1. UI inmediata
+    setState(() => _notes.insert(0, note));
 
-  void _updateNote(int i, Note updated) {
-    setState(() {
-      final wasFav = _favorites.contains(_notes[i]);
-      if (wasFav) {
-        _favorites.remove(_notes[i]);
-        _favorites.add(updated);
-      }
-      _notes[i] = updated;
-    });
+    // 2. SQLite (persistencia local)
+    await DatabaseService.insertNote(note);
+
+    // 3. Firestore (nube)
+    await FirestoreService.saveNote(note);
+
+    // 4. Backend propio (lógica de negocio / registro)
+    await ApiService.saveNote(note);
   }
 
-  void _deleteNote(int index) {
+  void _addVoiceNote(VoiceNote vn) => setState(
+    () => _voiceNotes.insert(0, vn)
+  );
+
+  Future<void> _updateNote(int i, Note updated) async {
+    final original = _notes[i];
     setState(() {
-      _favorites.remove(_notes[index]);
-      _trashedNotes.insert(0, _notes[index]);
+      final wasFav = _favorites.contains(_notes[i]);
+      if (wasFav) { _favorites.remove(_notes[i]); _favorites.add(updated); }
+      _notes[i] = updated;
+    });
+    await DatabaseService.updateNote(original.title, updated);
+    await FirestoreService.saveNote(updated);
+  }
+
+  void _deleteNote(int index) async {
+    final note = _notes[index];
+    setState(() {
+      _favorites.remove(note);
+      _trashedNotes.insert(0, note);
       _notes.removeAt(index);
     });
+    await DatabaseService.deleteNote(note.title);
+    await FirestoreService.deleteNote(note.title);
   }
 
   void _shareNote(Note note) {

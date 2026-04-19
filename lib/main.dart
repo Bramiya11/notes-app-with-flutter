@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:notes_app_with_flutter/services/NotificationService.dart';
 import 'screens/WelcomeScreen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.init();
   // Oculta barra de estado (arriba) y barra de navegación (abajo)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

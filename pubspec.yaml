@@ -37,6 +37,11 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^10.0.0
   flutter_local_notifications: ^21.0.0
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  http: ^1.6.0          # para llamar al backend
+  cloud_firestore: ^6.3.0  # para el siguiente punto
+  firebase_core: ^4.7.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
