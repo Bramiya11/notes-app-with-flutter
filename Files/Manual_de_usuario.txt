@@ -1,0 +1,86 @@
+MANUAL DE USUARIO
+
+notes-app-with-flutter
+
+Autores:
+ Brandon Ramírez Bedoya
+ Alejandro Pulgarín Gutiérrez
+
+Año: 2026
+
+1. INTRODUCCIÓN
+    Este manual de usuario tiene como objetivo guiar al usuario en el uso de la aplicación “App de Notas con Flutter”, proporcionando instrucciones claras sobre sus funcionalidades principales. La aplicación está diseñada para facilitar la creación, organización y gestión de notas de texto y voz de manera sencilla e intuitiva.
+
+    2. REQUISITOS DEL SISTEMA
+
+    Para el correcto funcionamiento de la aplicación se requiere:
+    Dispositivo móvil (Android o iOS)
+    Espacio de almacenamiento disponible
+    Conexión a internet (opcional, para sincronización)
+
+3. INICIO DE LA APLICACIÓN
+    Al abrir la aplicación, el usuario accede a la aplicación al presionar el botón “Iniciar”
+
+
+4. PANTALLA PRINCIPAL
+    En la pantalla principal el usuario podrá:
+    - Ver todas sus notas creadas
+    - Filtrar entre notas normales y favoritas
+    - Acceder a notas de voz
+    - Acceder a la papelera
+    - Crear nuevas notas
+
+
+
+5. CREAR UNA NOTA
+    - Para crear una nota:
+    - Presionar el botón “+”
+    - Ingresar el título de la nota
+    - (Opcional) Agregar contenido
+    - (Opcional) Seleccionar colores y etiquetas
+    - Presionar guardar
+
+
+6. EDITAR UNA NOTA
+    Para editar una nota:
+    - Seleccionar una nota existente
+    - Modificar la información necesaria
+    - Guardar los cambios
+
+
+7. ELIMINAR UNA NOTA
+    Para eliminar una nota:
+    - Seleccionar la opción de menú en la nota
+    - Presionar eliminar
+    - La nota será enviada a la papelera, donde podrá ser recuperada posteriormente.
+
+8. COMPARTIR UNA NOTA
+    Para compartir una nota:
+    - Abrir el menú de opciones
+    - Seleccionar compartir
+    - Elegir la aplicación destino
+
+
+9. NOTAS DE VOZ
+    La aplicación permite grabar notas de voz:
+    - Presionar el ícono de micrófono
+    - Grabar el audio
+    - Guardar la nota de voz
+    - Estas aparecerán en la lista principal.
+
+10. FAVORITOS
+    El usuario puede marcar notas como favoritas para un acceso más rápido:
+    - Seleccionar la opción favorito en una nota
+    - Acceder a ellas desde el filtro de favoritos
+
+
+12. PERSONALIZACIÓN
+    El usuario puede:
+    - Cambiar colores de las notas
+    - Agregar etiquetas (tags)
+    - Marcar notas como destacadas
+
+
+13. CONCLUSIÓN
+    La aplicación “App de Notas con Flutter” ofrece una forma sencilla y eficiente de gestionar notas, permitiendo al usuario organizar su información mediante diferentes herramientas como notas de texto, notas de voz, favoritos y opciones de personalización. Su diseño intuitivo facilita el uso desde el primer momento, convirtiéndola en una solución práctica para el día a día.
+

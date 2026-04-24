@@ -1,0 +1,167 @@
+MANUAL TÉCNICO / DOCUMENTACIÓN
+notes-app-with-flutter
+
+Autores:
+ Brandon Ramírez Bedoya
+ Alejandro Pulgarín Gutiérrez
+
+Año: 2026
+1. INTRODUCCIÓN
+    Este documento presenta la documentación técnica de la aplicación móvil “notes-app-with-flutter”, desarrollada con el objetivo de permitir a los usuarios crear, editar, eliminar y compartir notas de manera eficiente.
+    La aplicación está orientada principalmente a estudiantes y usuarios en general que necesitan organizar información mediante notas de texto y notas de voz, proporcionando una experiencia moderna, intuitiva y adaptable a diferentes dispositivos.
+
+2. OBJETIVO DEL SISTEMA
+    Desarrollar una aplicación móvil que permita:
+    Crear notas de texto personalizadas
+    Editar notas existentes
+    Eliminar notas (con manejo de papelera)
+    Compartir notas
+    Crear notas de voz
+    Marcar notas como favoritas
+    Sincronizar información en diferentes servicios (local y nube)
+
+3. ARQUITECTURA DEL SISTEMA
+    La aplicación está compuesta por dos repositorios principales:
+    3.1 Aplicación móvil (Frontend)
+    Desarrollada en Flutter
+    Maneja la interfaz de usuario y la lógica de interacción
+
+    3.2 Servidor (Backend)
+    Repositorio privado
+    Encargado de almacenar y gestionar las notas
+    Comunicación mediante servicios API
+
+4. TECNOLOGÍAS UTILIZADAS
+    Flutter (Dart) → Desarrollo de la aplicación móvil
+    Firebase → Inicialización y servicios en la nube
+    SQLite → Persistencia local
+    Firestore → Base de datos en la nube
+    API REST → Comunicación con backend propio
+    Share Plus → Compartir notas
+    Material Design 3 → Diseño UI
+
+
+5. ESTRUCTURA DEL PROYECTO
+    El proyecto está organizado en los siguientes módulos:
+    main.dart → Punto de entrada
+    screens/ → Pantallas de la aplicación
+    models/ → Modelos de datos
+    services/ → Servicios (DB, API, Firebase, notificaciones)
+
+
+6. FUNCIONAMIENTO DEL SISTEMA
+    6.1 Archivo principal (main.dart)
+        El archivo principal se encarga de:
+        - Inicializar Flutter
+        - Inicializar Firebase
+        - Configurar notificaciones
+        - Configurar el tema de la aplicación
+        - Definir la pantalla inicial
+
+    6.2 Pantalla de inicio (HomeScreen)
+        Es la pantalla principal donde se gestionan las notas.
+        Funciones principales:
+        - Visualización de notas
+        - Filtrado (todas / favoritas)
+        - Eliminación de notas
+        - Compartir notas
+        - Acceso a notas de voz
+        - Acceso a papelera
+
+    6.3 Creación de notas (AddNoteScreen)
+        Permite crear nuevas notas con múltiples características:
+        Título
+        Contenido
+        Etiquetas (tags)
+        Colores personalizados
+        Notas destacadas
+
+    6.4 Edición de notas
+        Las notas pueden ser editadas desde la pantalla de detalle:
+        Se actualiza en memoria
+        Se sincroniza en base de datos local
+        Se actualiza en Firestore
+
+    6.5 Eliminación de notas
+        Las notas eliminadas:
+        Se mueven a la papelera
+        Se eliminan de la base de datos
+        Se eliminan de Firestore
+
+    6.6 Compartir notas
+        Se utiliza la librería:
+        Share.share(text);
+        Permite enviar la nota a otras aplicaciones.
+
+    6.7 Notas de voz
+        Se implementa una pantalla independiente para:
+        Grabar audio
+        Guardar notas de voz
+        Visualizarlas en la lista principal
+
+
+7. MODELO DE DATOS
+    7.1 Nota (Note)
+        Contiene:
+        title
+        body
+        date
+        isFeatured
+        tags
+        cardColor
+        textColor
+
+    7.2 Nota de voz (VoiceNote)
+        Contiene:
+        archivo de audio
+        fecha
+        duración
+
+
+8. SERVICIOS
+    8.1 DatabaseService
+        Manejo de SQLite
+        CRUD local
+
+    8.2 FirestoreService
+        Sincronización en la nube
+
+    8.3 APIService
+        Comunicación con backend propio
+
+    8.4 NotificationService
+        Notificaciones de acciones (guardar, editar)
+
+
+9. FLUJO DE DATOS
+    Cuando se crea una nota:
+    - Se guarda en la UI
+    - Se guarda en SQLite
+    - Se guarda en Firestore
+    - Se envía al backend
+
+10. INTERFAZ DE USUARIO
+    La aplicación cuenta con:
+    - Diseño responsive
+    - Tema oscuro moderno
+    - Animaciones suaves
+    - Componentes reutilizables
+
+
+11. CONSIDERACIONES TÉCNICAS
+    - Manejo de estado con setState
+    - Navegación con Navigator
+    - Animaciones con AnimationController
+    - Arquitectura modular
+
+
+12. POSIBLES MEJORAS
+    - Implementar autenticación de usuarios
+    - Sincronización en tiempo real
+    - Backup automático
+    - Soporte offline avanzado
+    - Integración con IA
+
+13. CONCLUSIÓN
+    La aplicación “App de Notas con Flutter” cumple con su objetivo de ofrecer una solución práctica y eficiente para la gestión de notas, integrando funcionalidades como creación, edición, eliminación, notas de voz y compartición. Gracias al uso de tecnologías como Flutter, SQLite, Firestore y un backend propio, se logra una aplicación moderna, escalable y con almacenamiento tanto local como en la nube. Además, su diseño intuitivo y personalizable mejora la experiencia del usuario, convirtiéndola en una herramienta útil y adaptable para diferentes necesidades, y dejando una base sólida para futuras mejoras. 
+

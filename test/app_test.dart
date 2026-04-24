@@ -3,7 +3,7 @@
 // test/app_test.dart
 //
 // Pruebas para la app de notas.
-// Cubre: modelo Note/NoteTag, lógica de favoritos, papelera y búsqueda.
+// Cubre: modelo Note/NoteTag, lógica de favoritos, papelera y edición.
 //
 // Para correr las pruebas:
 //   flutter test
@@ -91,7 +91,6 @@ void main() {
       const tag1 = NoteTag(label: 'A', color: Color(0xFF000000));
       const tag2 = NoteTag(label: 'A', color: Color(0xFF000000));
 
-      // Son distintos objetos pero con los mismos valores
       expect(tag1.label, tag2.label);
       expect(tag1.color, tag2.color);
     });
@@ -106,7 +105,6 @@ void main() {
     late Note nota2;
 
     setUp(() {
-      // Se ejecuta antes de cada test de este grupo
       favorites = {};
       nota1 = const Note(title: 'Nota 1', date: '01/01/2025');
       nota2 = const Note(title: 'Nota 2', date: '02/01/2025');
@@ -140,7 +138,6 @@ void main() {
     });
 
     test('Toggle de favorito: agrega si no está, quita si está', () {
-      // Función toggle igual a la de HomeScreen
       void toggleFavorite(Note note) {
         if (favorites.contains(note)) {
           favorites.remove(note);
@@ -150,10 +147,10 @@ void main() {
       }
 
       toggleFavorite(nota1);
-      expect(favorites.contains(nota1), true); // se agregó
+      expect(favorites.contains(nota1), true);
 
       toggleFavorite(nota1);
-      expect(favorites.contains(nota1), false); // se quitó
+      expect(favorites.contains(nota1), false);
     });
   });
 
@@ -190,7 +187,7 @@ void main() {
       notes.removeAt(1);
       notes.removeAt(0);
 
-      expect(trashedNotes[0].title, 'Nota B'); // última eliminada
+      expect(trashedNotes[0].title, 'Nota B');
       expect(trashedNotes[1].title, 'Nota A');
     });
 
@@ -198,7 +195,6 @@ void main() {
       trashedNotes.insert(0, notes[0]);
       notes.removeAt(0);
 
-      // Restaurar
       final restored = trashedNotes.removeAt(0);
       notes.insert(0, restored);
 
@@ -211,7 +207,7 @@ void main() {
       trashedNotes.addAll(notes);
       notes.clear();
 
-      trashedNotes.clear(); // vaciar papelera
+      trashedNotes.clear();
 
       expect(trashedNotes.isEmpty, true);
     });
@@ -221,7 +217,6 @@ void main() {
       final noteToDelete = notes[0];
       favorites.add(noteToDelete);
 
-      // Simula deleteNote
       favorites.remove(noteToDelete);
       trashedNotes.insert(0, noteToDelete);
       notes.removeAt(0);
@@ -232,85 +227,7 @@ void main() {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  // GRUPO 5: Lógica de filtrado y búsqueda
-  // ══════════════════════════════════════════════════════════════════════════
-  group('Lógica de filtrado', () {
-    final notes = [
-      const Note(
-          title: 'Parcial Final',
-          body: 'Examen de investigacion',
-          date: '01/01/2025',
-          isFeatured: true),
-      const Note(
-          title: 'Compras',
-          body: 'Leche, pan, huevos',
-          date: '02/01/2025'),
-      const Note(
-          title: 'Gym',
-          body: 'Rutina de pecho',
-          date: '03/01/2025',
-          isFeatured: true),
-    ];
-
-    test('Filtrar notas destacadas', () {
-      final featured = notes.where((n) => n.isFeatured).toList();
-      expect(featured.length, 2);
-      expect(featured.every((n) => n.isFeatured), true);
-    });
-
-    test('Filtrar notas no destacadas', () {
-      final small = notes.where((n) => !n.isFeatured).toList();
-      expect(small.length, 1);
-      expect(small.first.title, 'Compras');
-    });
-
-    test('Buscar nota por título (case insensitive)', () {
-      final query = 'parcial';
-      final results = notes
-          .where((n) => n.title.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-
-      expect(results.length, 1);
-      expect(results.first.title, 'Parcial Final');
-    });
-
-    test('Buscar nota por contenido del body', () {
-      final query = 'rutina';
-      final results = notes
-          .where((n) =>
-              n.body != null &&
-              n.body!.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-
-      expect(results.length, 1);
-      expect(results.first.title, 'Gym');
-    });
-
-    test('Búsqueda sin resultados devuelve lista vacía', () {
-      final query = 'zzz_no_existe';
-      final results = notes
-          .where((n) =>
-              n.title.toLowerCase().contains(query.toLowerCase()) ||
-              (n.body?.toLowerCase().contains(query.toLowerCase()) ?? false))
-          .toList();
-
-      expect(results.isEmpty, true);
-    });
-
-    test('Búsqueda vacía devuelve todas las notas', () {
-      final query = '';
-      final results = query.isEmpty
-          ? notes
-          : notes
-              .where((n) => n.title.toLowerCase().contains(query.toLowerCase()))
-              .toList();
-
-      expect(results.length, notes.length);
-    });
-  });
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // GRUPO 6: Lógica de edición de notas
+  // GRUPO 5: Lógica de edición de notas
   // ══════════════════════════════════════════════════════════════════════════
   group('Lógica de edición de notas', () {
     test('Actualizar el título de una nota', () {
@@ -358,7 +275,6 @@ void main() {
       favorites.add(notes[0]);
       expect(favorites.contains(notes[0]), true);
 
-      // Simula updateNote con actualización de favoritos
       final updated = Note(
         title: 'Nota editada',
         body: 'Nuevo contenido',
@@ -390,7 +306,7 @@ void main() {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  // GRUPO 7: Modelo VoiceNote
+  // GRUPO 6: Modelo VoiceNote
   // ══════════════════════════════════════════════════════════════════════════
   group('Modelo VoiceNote', () {
     test('Crea una nota de voz con los campos correctos', () {

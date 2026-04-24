@@ -14,42 +14,17 @@ import 'package:notes_app_with_flutter/services/APIService.dart';
 
 // ── Pantalla principal ───────────────────────────────────────────────────────
 
-class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<NotesScreen> createState() => _NotesScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _NotesScreenState extends State<NotesScreen>
+class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   // ── Datos ────────────────────────────────────────────────────────────────
-  final List<Note> _notes = [
-    const Note(
-      title: 'Parcial Final',
-      body: 'El dia sabado 01 de Noviembre es el parcial final de investigacion',
-      date: '25/10/2025',
-      isFeatured: true,
-      cardColor: Color(0xFFF5F0C8),
-      textColor: Color(0xFF1C1C1E),
-    ),
-    const Note(
-      title: 'Nota 2',
-      date: '24/10/2025',
-      cardColor: Color(0xFF2C2C2E),
-      tags: [
-        NoteTag(label: 'Gym', color: Color(0xFF3B82F6)),
-        NoteTag(label: 'Pagos', color: Color(0xFF22C55E)),
-      ],
-    ),
-    const Note(
-      title: 'Nota 3',
-      body: 'Comprar comida del perro',
-      date: '23/10/2025',
-      cardColor: Color(0xFF2C2C2E),
-      textColor: Color(0xFFF59E0B),
-    ),
-  ];
+  final List<Note> _notes = [];
 
   final List<VoiceNote> _voiceNotes = [];
   final List<Note> _trashedNotes = [];
